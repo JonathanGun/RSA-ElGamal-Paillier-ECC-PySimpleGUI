@@ -5,7 +5,7 @@ import random
 class BaseCipher(ABC):
     allow_byte = False
 
-    def __init__(self, plaintext: int, ciphertext: int, privkey: int, pubkey: int):
+    def __init__(self, plaintext: int = None, ciphertext: int = None, privkey: int = None, pubkey: int = None):
         self.plaintext = plaintext
         self.ciphertext = ciphertext
         self.privkey = privkey

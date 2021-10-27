@@ -1,5 +1,4 @@
 from datetime import datetime
-import os
 from typing import List
 import PySimpleGUI as sg
 
@@ -46,7 +45,7 @@ layout = [
             ]], key="pubkey_source")],
             [sg.Multiline(key="plaintext", size=(70, 10))],
 
-            [sg.Button("Encrypt", pad=(5, 10)), sg.T("vvv   ^^^"), sg.Button("Decrypt", pad=(5, 10))],
+            [sg.Button("Encrypt", pad=(5, 10), key="encrypt"), sg.T("vvv   ^^^"), sg.Button("Decrypt", pad=(5, 10), key="decrypt")],
 
             [sg.T("Private Key:")],
             [sg.TabGroup([[
@@ -60,7 +59,7 @@ layout = [
             [sg.Multiline(key="ciphertext", size=(70, 10))],
 
             [sg.T("Output File", size=(10, 1)), sg.In(key="filename", size=(60, 1))],
-            [sg.Button("Save Plaintext", pad=(5, 10)), sg.Button("Save Ciphertext", pad=(5, 10))],
+            [sg.Button("Save Plaintext", pad=(5, 10), key="save_plaintext"), sg.Button("Save Ciphertext", pad=(5, 10), key="save_ciphertext")],
         ], key="encrypt_decrypt"),
         sg.Tab("About", [[sg.T(txt)] for txt in Config.ABOUT.strip().split("\n")], key="about"),
     ]], key="current_tab")],
@@ -80,96 +79,73 @@ def write_file(filepath: str, content: List[str]) -> bool:
         f.writelines(content)
 
 
+CIPHER_MAP = {
+    "RSA": RSA,
+    "ElGamal": ElGamal,
+    "Paillier": Paillier,
+    "ECC": ECC,
+}
 window = sg.Window(Config.APP_NAME, layout)
-event, values = window.read()
 
-
-stego_object = None
-while event not in (sg.WIN_CLOSED, "Exit"):
-    event = event.lower()
+while sg_input := window.read():
     debug_text, debug_color = "", None
-    print(event, values)
+    print(sg_input)
 
-    if event in ["encrypt", "decrypt"]:
-        ciphertext, plaintext, pubkey, privkey = "", "", 0, 0
-        print("Method:", values["method"])
+    try:
+        match sg_input:
+            case ((sg.WIN_CLOSED | "Exit"), _):
+                break
+            case (("encrypt" | "decrypt") as event, values):
+                method = values["method"]
+                cipher = CIPHER_MAP.get(method)
+                window["filename"].update(datetime.now().strftime("%Y%m%d-%H%M%S"))
+                match (event, values):
+                    case ("encrypt", {
+                        "plaintext": plaintext,
+                        "pubkey_text": pubkey,
+                        "pubkey_file": pubkey_file,
+                        "pubkey_source": pubkey_source,
+                    }):
+                        # Read pubkey
+                        pubkey = pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0]
+                        pubkey = int(pubkey)
+                        plaintext = int(plaintext)
+                        cipher = cipher(plaintext=plaintext, pubkey=pubkey)
+                        cipher.encrypt()
+                        window["ciphertext"].update(cipher.ciphertext)
 
-        if event == "encrypt":
-            plaintext = values["plaintext"]
+                    case ("decrypt", {
+                        "ciphertext": ciphertext,
+                        "privkey_text": privkey,
+                        "privkey_file": privkey_file,
+                        "privkey_source": privkey_source,
+                    }):
+                        # Read privkey
+                        privkey = privkey if privkey_source == "privkey_text_tab" else load_file(privkey_file)[0]
+                        privkey = int(privkey)
+                        ciphertext = int(ciphertext)
+                        cipher = cipher(ciphertext=ciphertext, privkey=privkey)
+                        cipher.decrypt()
+                        window["plaintext"].update(cipher.plaintext)
 
-            # Read pubkey
-            pubkey = values["pubkey_text"]
-            window["filename"].update(datetime.now().strftime("%Y%m%d-%H%M%S") + "." + event[:3])
-            if values["pubkey_source"] == "pubkey_file_tab":
-                pubkey = load_file(values["pubkey_file"])[0]
-                window["filename"].update(os.path.basename(values["pubkey_file"]) + "." + event[:3])
+                debug_text, debug_color = f"Succesfully {event}ed!", Config.SUCCESS_COLOR
 
-            # Try convert pubkey to int
-            try:
-                pubkey = int(pubkey)
-            except Exception as e:
-                debug_text, debug_color = str(e), Config.FAIL_COLOR
+            case ("generate", {"method": "RSA"}):
+                pubkey_gen, privkey_gen = CIPHER_MAP.get(method).generate_key(seed=datetime.now())
+                window["pubkey_gen"].update(pubkey_gen)
+                window["privkey_gen"].update(privkey_gen)
 
-        elif event == "decrypt":
-            ciphertext = values["ciphertext"]
+            case (event, {"filename": filename}) if filename == "":
+                debug_text, debug_color = "Output filename cannot be empty", Config.FAIL_COLOR
+            case ("save_plaintext", {"filename": filename}):
+                write_file("out/" + filename, cipher.plaintext)
+            case ("save_ciphertext", {"filename": filename}):
+                write_file("out/" + filename, cipher.ciphertext)
 
-            # Read privkey
-            privkey = values["privkey_text"]
-            window["filename"].update(datetime.now().strftime("%Y%m%d-%H%M%S") + "." + event[:3])
-            if values["privkey_source"] == "privkey_file_tab":
-                privkey = load_file(values["privkey_file"])[0]
-                window["filename"].update(os.path.basename(values["privkey_file"]) + "." + event[:3])
-
-            # Try convert privkey to int
-            try:
-                privkey = int(privkey)
-            except Exception as e:
-                debug_text, debug_color = str(e), Config.FAIL_COLOR
-
-        if debug_color != Config.FAIL_COLOR:
-            # Process (decrypt / encrypt)
-            method = values["method"]
-            cipher = RSA if method == "RSA" else ElGamal if method == "ElGamal" else Paillier if method == "Paillier" else ECC
-            cipher = cipher(
-                plaintext=plaintext,
-                ciphertext=ciphertext,
-                privkey=privkey,
-                pubkey=pubkey,
-            )
-            getattr(cipher, event)()
-            debug_text, debug_color = f"Succesfully {event}ed!", Config.SUCCESS_COLOR
-
-    elif event == "generate":
-        method = values["method"]
-        cipher = RSA if method == "RSA" else ElGamal if method == "ElGamal" else Paillier if method == "Paillier" else ECC
-        pubkey_gen, privkey_gen = cipher.generate_key(seed=datetime.now())
-        debug_text, debug_color = f"Succesfully {event}d!", Config.SUCCESS_COLOR
-
-    elif event.startswith("save"):
-        filename = "out/" + values["filename"]
-        if values["filename"]:
-            try:
-                write_file(filename, getattr(cipher, event.split()[-1]))
-                debug_text, debug_color = f"Succesfully saved as {filename}", Config.SUCCESS_COLOR
-            except Exception as e:
-                print(e)
-                debug_text, debug_color = f"Failed to save as {filename}", Config.FAIL_COLOR
-        else:
-            debug_text, debug_color = "Output filename cannot be empty", Config.FAIL_COLOR
-
-    # Output
-    if debug_color == Config.SUCCESS_COLOR:
-        if event in ["decrypt", "encrypt"]:
-            window["ciphertext"].update(cipher.ciphertext)
-            window["plaintext"].update(cipher.plaintext)
-        elif event in ["generate"]:
-            window["pubkey_gen"].update(pubkey_gen)
-            window["privkey_gen"].update(privkey_gen)
+    except Exception as e:
+        debug_text, debug_color = str(e), Config.FAIL_COLOR
 
     window["debug"].update(debug_text)
     window["debug"].update(background_color=debug_color)
-
-    # Get next value
-    event, values = window.read()
 
 window.close()
