@@ -26,6 +26,14 @@ layout = [
     [sg.T("", key="debug")],
     [sg.TabGroup([[
         sg.Tab("Encrypt/Decrypt", [
+            [sg.T("Method", size=(15, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="keygen_method", default_value="RSA", size=(10, 1))],
+            [sg.T("Public Key", size=(15, 1)), sg.In(key="pubkey_gen", size=(55, 1))],
+            [sg.T("Private Key", size=(15, 1)), sg.In(key="privkey_gen", size=(55, 1))],
+            [sg.T("Public Key File", size=(15, 1)), sg.In(key="pubkey_filename", size=(55, 1))],
+            [sg.T("Private Key File", size=(15, 1)), sg.In(key="privkey_filename", size=(55, 1))],
+            [sg.Button("Generate Public/Private Key Pair", pad=(5, 10), key="generate")],
+        ], key="keygen"),
+        sg.Tab("Encrypt/Decrypt", [
             [sg.T("Method", size=(10, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="method", default_value="RSA", size=(10, 1))],
             [sg.T("Public Key:")],
             [sg.TabGroup([[
@@ -131,6 +139,12 @@ while event not in (sg.WIN_CLOSED, "Exit"):
             getattr(cipher, event)()
             debug_text, debug_color = f"Succesfully {event}ed!", Config.SUCCESS_COLOR
 
+    elif event == "generate":
+        method = values["method"]
+        cipher = RSA if method == "RSA" else ElGamal if method == "ElGamal" else Paillier if method == "Paillier" else ECC
+        pubkey_gen, privkey_gen = cipher.generate_key(seed=datetime.now())
+        debug_text, debug_color = f"Succesfully {event}d!", Config.SUCCESS_COLOR
+
     elif event.startswith("save"):
         filename = "out/" + values["filename"]
         if values["filename"]:
@@ -144,9 +158,14 @@ while event not in (sg.WIN_CLOSED, "Exit"):
             debug_text, debug_color = "Output filename cannot be empty", Config.FAIL_COLOR
 
     # Output
-    if event in ["decrypt", "encrypt"] and debug_color == Config.SUCCESS_COLOR:
-        window["ciphertext"].update(cipher.ciphertext)
-        window["plaintext"].update(cipher.plaintext)
+    if debug_color == Config.SUCCESS_COLOR:
+        if event in ["decrypt", "encrypt"]:
+            window["ciphertext"].update(cipher.ciphertext)
+            window["plaintext"].update(cipher.plaintext)
+        elif event in ["generate"]:
+            window["pubkey_gen"].update(pubkey_gen)
+            window["privkey_gen"].update(privkey_gen)
+
     window["debug"].update(debug_text)
     window["debug"].update(background_color=debug_color)
 

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import random
 
 
 class BaseCipher(ABC):
@@ -17,3 +18,7 @@ class BaseCipher(ABC):
     @abstractmethod
     def decrypt(self):
         pass
+
+    def generate_key(seed):
+        random.seed(seed)
+        return random.randint(0, 1e18), random.randint(0, 1e18)
