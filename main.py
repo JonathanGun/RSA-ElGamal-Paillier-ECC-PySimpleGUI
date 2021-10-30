@@ -25,7 +25,7 @@ layout = [
     [sg.T("", key="debug")],
     [sg.TabGroup([[
         sg.Tab("Encrypt/Decrypt", [
-            [sg.T("Method", size=(15, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="keygen_method", default_value="RSA", size=(10, 1))],
+            [sg.T("Method", size=(15, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="keygen_method", default_value="ECC", size=(10, 1))],
             [sg.T("Public Key", size=(15, 1)), sg.In(key="pubkey_gen", size=(55, 1))],
             [sg.T("Private Key", size=(15, 1)), sg.In(key="privkey_gen", size=(55, 1))],
             [sg.T("Public Key File", size=(15, 1)), sg.In(key="pubkey_filename", size=(55, 1))],
@@ -33,7 +33,13 @@ layout = [
             [sg.Button("Generate Public/Private Key Pair", pad=(5, 10), key="generate")],
         ], key="keygen"),
         sg.Tab("Encrypt/Decrypt", [
-            [sg.T("Method", size=(10, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="method", default_value="RSA", size=(10, 1))],
+            [sg.T("Method", size=(10, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="method", default_value="ECC", size=(10, 1))],
+            # TODO:
+            # ubah jadi tabgroup
+            # ECC perlu y=x^3+a*x+b (mod p). input a,b,p dan basis B
+            # RSA perlu
+            # ElGamal perlu
+            # Paillier perlu
             [sg.T("Public Key:")],
             [sg.TabGroup([[
                 sg.Tab("From Text", [
@@ -108,11 +114,12 @@ while sg_input := window.read():
                     }):
                         # Read pubkey
                         pubkey = pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0]
-                        pubkey = int(pubkey)
+                        if method != "ECC":
+                            pubkey = int(pubkey)
                         plaintext = int(plaintext)
                         cipher = cipher(plaintext=plaintext, pubkey=pubkey)
                         cipher.encrypt()
-                        window["ciphertext"].update(cipher.ciphertext)
+                        window["ciphertext"].update(str(cipher.ciphertext))
 
                     case ("decrypt", {
                         "ciphertext": ciphertext,
@@ -123,15 +130,16 @@ while sg_input := window.read():
                         # Read privkey
                         privkey = privkey if privkey_source == "privkey_text_tab" else load_file(privkey_file)[0]
                         privkey = int(privkey)
-                        ciphertext = int(ciphertext)
+                        if method != "ECC":
+                            ciphertext = int(ciphertext)
                         cipher = cipher(ciphertext=ciphertext, privkey=privkey)
                         cipher.decrypt()
-                        window["plaintext"].update(cipher.plaintext)
+                        window["plaintext"].update(str(cipher.plaintext))
 
                 debug_text, debug_color = f"Succesfully {event}ed!", Config.SUCCESS_COLOR
 
-            case ("generate", {"method": "RSA"}):
-                pubkey_gen, privkey_gen = CIPHER_MAP.get(method).generate_key(seed=datetime.now())
+            case ("generate", {"keygen_method": method}):
+                privkey_gen, pubkey_gen = CIPHER_MAP.get(method)().generate_key()
                 window["pubkey_gen"].update(pubkey_gen)
                 window["privkey_gen"].update(privkey_gen)
 
