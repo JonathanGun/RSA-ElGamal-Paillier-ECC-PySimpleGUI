@@ -174,7 +174,6 @@ class ECC(BaseCipher):
 
     def encrypt(self):
         # Slide hal 41
-        self.pubkey = re.findall(r'(\d+,\d+)', self.pubkey.replace(" ", ""))[0]
         self.pubkey = Point(*list(map(int, re.findall(r'\d+', self.pubkey)))[:2])
         k = random.randint(1, self.curve.p - 1)
         self.plaintext = self.curve.encode(self.plaintext)

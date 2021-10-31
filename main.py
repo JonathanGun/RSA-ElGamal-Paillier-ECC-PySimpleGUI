@@ -55,6 +55,7 @@ layout = [
             [sg.Button("Save Key Pair", pad=(5, 10), key="save_keygen")],
         ], key="keygen"),
         sg.Tab("Encrypt/Decrypt", [
+            [sg.T("Choose Method")],
             [sg.TabGroup([[
                 sg.Tab("RSA", [
                     # TODO chel
@@ -77,29 +78,27 @@ layout = [
             [sg.Button("Validate Input", pad=(5, 10), key="validate")],
             [sg.HSep()],
 
-            [sg.T("Public Key:")],
-            [sg.TabGroup([[
+            [sg.T("Public Key", size=(10, 1)), sg.TabGroup([[
                 sg.Tab("From Text", [
-                    [sg.Multiline(key="pubkey_text", size=(70, 3))]
+                    [sg.In(key="pubkey_text", size=(55, 1))]
                 ], key="pubkey_text_tab"),
                 sg.Tab("From File", [
-                    [sg.T("Select File", size=(10, 1)), sg.FileBrowse("Choose a file", key="pubkey_file", target=(sg.ThisRow, 2)), sg.T("", size=(40, 2))],
+                    [sg.T("Select File", size=(10, 1)), sg.FileBrowse("Choose a file", key="pubkey_file", target=(sg.ThisRow, 2)), sg.T("", size=(30, 2))],
                 ], key="pubkey_file_tab"),
             ]], key="pubkey_source")],
-            [sg.Multiline(key="plaintext", size=(70, 10))],
+            [sg.T("Plaintext", size=(10, 1)), sg.In(key="plaintext", size=(60, 1))],
 
-            [sg.Button("Encrypt", pad=(5, 10), key="encrypt"), sg.T("vvv   ^^^"), sg.Button("Decrypt", pad=(5, 10), key="decrypt")],
+            [sg.T("", size=(20, 1)), sg.Button("Encrypt", pad=(5, 10), key="encrypt"), sg.T("vvv   ^^^"), sg.Button("Decrypt", pad=(5, 10), key="decrypt")],
 
-            [sg.T("Private Key:")],
-            [sg.TabGroup([[
+            [sg.T("Private Key", size=(10, 1)), sg.TabGroup([[
                 sg.Tab("From Text", [
-                    [sg.Multiline(key="privkey_text", size=(70, 3))]
+                    [sg.In(key="privkey_text", size=(55, 1))]
                 ], key="privkey_text_tab"),
                 sg.Tab("From File", [
-                    [sg.T("Select File", size=(10, 1)), sg.FileBrowse("Choose a file", key="privkey_file", target=(sg.ThisRow, 2)), sg.T("", size=(40, 2))],
+                    [sg.T("Select File", size=(10, 1)), sg.FileBrowse("Choose a file", key="privkey_file", target=(sg.ThisRow, 2)), sg.T("", size=(30, 2))],
                 ], key="privkey_file_tab"),
             ]], key="privkey_source")],
-            [sg.Multiline(key="ciphertext", size=(70, 10))],
+            [sg.T("Ciphertext", size=(10, 1)), sg.In(key="ciphertext", size=(60, 1))],
 
             [sg.T("Output File", size=(10, 1)), sg.In(key="filename", size=(60, 1))],
             [sg.Button("Save Plaintext", pad=(5, 10), key="save_plaintext"), sg.Button("Save Ciphertext", pad=(5, 10), key="save_ciphertext")],
@@ -190,9 +189,9 @@ while sg_input := window.read():
                     }):
                         # Read privkey
                         privkey = privkey if privkey_source == "privkey_text_tab" else load_file(privkey_file)[0]
-                        privkey = int(privkey)
-                        if method != "ECC":
-                            ciphertext = int(ciphertext)
+                        if method not in ["Paillier"]:
+                            privkey = int(privkey)
+                        ciphertext = int(ciphertext)
                         cipher = cipher(ciphertext=ciphertext, privkey=privkey)
                         cipher.decrypt()
                         window["plaintext"].update(str(cipher.plaintext))
@@ -234,7 +233,7 @@ while sg_input := window.read():
                 "keygen_paillier_q": q,
                 "keygen_paillier_g": g,
             }):
-                privkey_gen, pubkey_gen = Paillier(int(p), int(q), int(g)).generate_key()
+                privkey_gen, pubkey_gen = Paillier().generate_key(int(p), int(q), int(g))
                 window["pubkey_gen"].update(str(pubkey_gen))
                 window["privkey_gen"].update(str(privkey_gen))
                 debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR

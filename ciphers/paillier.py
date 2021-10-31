@@ -1,21 +1,32 @@
+import random
+import re
 from ciphers.base import BaseCipher
 from math import lcm, gcd
 
 
 class Paillier(BaseCipher):
-    def __init__(self, p: int, q: int, g: int, **kwargs):
-        super().__init__(**kwargs)
-        while p is None or q is None:
-            p, q = self._generate_pq()
-        self.p = p
-        self.q = q
-        self.g = g if g is not None else p * q + 1
-
-    def encrypt(self):
-        self.ciphertext = f"{self.plaintext} encrypted using {self.__class__.__name__} using key {self.pubkey}"
+    def encrypt(self, r: int = None):
+        # Slide 19
+        self.g, self.n = self._parse_tuple(self.pubkey, 2)
+        self.n2 = self.n * self.n
+        assert 0 <= self.plaintext < self.n
+        if r is None:
+            while True:
+                r = random.randint(0, self.n - 1)
+                if gcd(r, self.n) == 1:
+                    break
+        self.ciphertext = (pow(self.g, self.plaintext, self.n2) * pow(r, self.n, self.n2)) % self.n2
+        return self.ciphertext
 
     def decrypt(self):
-        self.plaintext = f"{self.ciphertext} decrypted using {self.__class__.__name__} using key {self.privkey}"
+        # Slide 19
+        self.l, self.m, self.n = self._parse_tuple(self.privkey, 3)
+        self.n2 = self.n * self.n
+        self.plaintext = (self.L(pow(self.ciphertext, self.l, self.n2), self.n) * self.m) % self.n
+        return self.plaintext
+
+    def _parse_tuple(self, s: str, n: int = 2):
+        return list(map(int, re.findall(r'\d+', s)))[:n]
 
     @staticmethod
     def L(x, n):
@@ -27,16 +38,18 @@ class Paillier(BaseCipher):
             p = None
         return p, q
 
-    def generate_key(self):
-        p, q, g = self.p, self.q, self.g
+    def generate_key(self, p: int = None, q: int = None, g: int = None):
+        # Slide 17
+        while p is None or q is None:
+            p, q = self._generate_pq()
         n = p * q
+        n2 = n * n
         l = lcm(p - 1, q - 1)
-        if g is None:
-            # always invertible
-            g = n + 1
-        gl = self.L(pow(g, l, n * n), n)
-        m = pow(gl, -1, n)
-        privkey = (l, m)
+        # n + 1 always invertible
+        g = g if g is not None else n + 1
+
+        m = pow(self.L(pow(g, l, n2), n), -1, n)
+        privkey = (l, m, n)
         pubkey = (g, n)
         return privkey, pubkey
 
