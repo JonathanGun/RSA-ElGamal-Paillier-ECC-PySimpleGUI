@@ -28,11 +28,11 @@ layout = [
             [sg.T("Choose Method")],
             [sg.TabGroup([[
                 sg.Tab("RSA", [
-                    # TODO
+                    # TODO chel
                     [sg.T("butuh input apa, masukin sini chel")],
                 ], key="RSA_"),
                 sg.Tab("ElGamal", [
-
+                    # TODO chel
                 ], key="ElGamal_"),
                 sg.Tab("ECC", [
                     [sg.T("y=x^3+a*x+b (mod p)")],
@@ -42,8 +42,9 @@ layout = [
                     [sg.T("B (int, Base point seed)", size=(25, 1)), sg.In(key="keygen_ecc_base", size=(43, 1))],
                 ], key="ECC_"),
                 sg.Tab("Paillier", [
-                    # TODO
-                    [sg.T("butuh input apa, masukin sini chel")],
+                    [sg.T("p (int)", size=(10, 1)), sg.In(key="keygen_paillier_p", size=(60, 1))],
+                    [sg.T("q (int)", size=(10, 1)), sg.In(key="keygen_paillier_q", size=(60, 1))],
+                    [sg.T("g (int)", size=(10, 1)), sg.In(key="keygen_paillier_g", size=(60, 1))],
                 ], key="Paillier_"),
             ]], key="keygen_method")],
             [sg.Button("Generate Public/Private Key Pair", pad=(5, 10), key="generate")],
@@ -56,11 +57,11 @@ layout = [
         sg.Tab("Encrypt/Decrypt", [
             [sg.TabGroup([[
                 sg.Tab("RSA", [
-                    # TODO
+                    # TODO chel
                     [sg.T("butuh input apa, masukin sini chel")],
                 ], key="RSA"),
                 sg.Tab("ElGamal", [
-
+                    # TODO chel
                 ], key="ElGamal"),
                 sg.Tab("ECC", [
                     [sg.T("y=x^3+a*x+b (mod p)")],
@@ -70,8 +71,7 @@ layout = [
                     [sg.T("B (int, Base point seed)", size=(25, 1)), sg.In(key="ecc_base", size=(40, 1))],
                 ], key="ECC"),
                 sg.Tab("Paillier", [
-                    # TODO
-                    [sg.T("butuh input apa, masukin sini chel")],
+                    [sg.T("No input. Go on")],
                 ], key="Paillier"),
             ]], key="method")],
             [sg.Button("Validate Input", pad=(5, 10), key="validate")],
@@ -170,7 +170,7 @@ while sg_input := window.read():
                             "plaintext": int(plaintext),
                             "pubkey": pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0],
                         }
-                        if method != "ECC":
+                        if method == "ECC":
                             cipher_args |= {
                                 "pubkey": int(cipher_args["pubkey"]),
                                 "a": int(values["ecc_a"]),
@@ -200,10 +200,44 @@ while sg_input := window.read():
                 debug_text, debug_color = f"Succesfully {event}ed!", Config.SUCCESS_COLOR
 
             # Generate Key
-            case ("generate", {"keygen_method": method}):
-                privkey_gen, pubkey_gen = CIPHER_MAP.get(method.split("_")[0])().generate_key()
-                window["pubkey_gen"].update(pubkey_gen)
-                window["privkey_gen"].update(privkey_gen)
+            case ("generate", {
+                "keygen_method": "RSA_",
+                # TODO chel
+                # "keygen_rsa_x": x,
+            }):
+                privkey_gen, pubkey_gen = RSA().generate_key()  # TODO chel
+                window["pubkey_gen"].update(str(pubkey_gen))
+                window["privkey_gen"].update(str(privkey_gen))
+                debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
+            case ("generate", {
+                "keygen_method": "ElGamal_",
+                # TODO chel
+                # "keygen_elgamal_x": x,
+            }):
+                privkey_gen, pubkey_gen = ElGamal().generate_key()  # TODO chel
+                window["pubkey_gen"].update(str(pubkey_gen))
+                window["privkey_gen"].update(str(privkey_gen))
+                debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
+            case ("generate", {
+                "keygen_method": "ECC_",
+                "keygen_ecc_a": a,
+                "keygen_ecc_b": b,
+                "keygen_ecc_p": p,
+            }):
+                privkey_gen, pubkey_gen = ECC(int(a), int(b), int(p)).generate_key()
+                window["pubkey_gen"].update(str(pubkey_gen))
+                window["privkey_gen"].update(str(privkey_gen))
+                debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
+            case ("generate", {
+                "keygen_method": "Paillier_",
+                "keygen_paillier_p": p,
+                "keygen_paillier_q": q,
+                "keygen_paillier_g": g,
+            }):
+                privkey_gen, pubkey_gen = Paillier(int(p), int(q), int(g)).generate_key()
+                window["pubkey_gen"].update(str(pubkey_gen))
+                window["privkey_gen"].update(str(privkey_gen))
+                debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
 
             # Save To File
             case (event, {
