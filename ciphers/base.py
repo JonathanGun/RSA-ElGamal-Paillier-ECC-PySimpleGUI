@@ -22,3 +22,6 @@ class BaseCipher(ABC):
 
     def generate_key(self):
         return random.randint(0, BaseCipher.MAX_NUM), random.randint(0, BaseCipher.MAX_NUM)
+
+    def validate_input(self):
+        pass

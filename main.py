@@ -24,22 +24,59 @@ layout = [
     [sg.T(Config.APP_NAME, font="Any 20")],
     [sg.T("", key="debug")],
     [sg.TabGroup([[
-        sg.Tab("Encrypt/Decrypt", [
-            [sg.T("Method", size=(15, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="keygen_method", default_value="ECC", size=(10, 1))],
-            [sg.T("Public Key", size=(15, 1)), sg.In(key="pubkey_gen", size=(55, 1))],
-            [sg.T("Private Key", size=(15, 1)), sg.In(key="privkey_gen", size=(55, 1))],
-            [sg.T("Public Key File", size=(15, 1)), sg.In(key="pubkey_filename", size=(55, 1))],
-            [sg.T("Private Key File", size=(15, 1)), sg.In(key="privkey_filename", size=(55, 1))],
+        sg.Tab("Key Generation", [
+            [sg.T("Choose Method")],
+            [sg.TabGroup([[
+                sg.Tab("RSA", [
+                    # TODO
+                    [sg.T("butuh input apa, masukin sini chel")],
+                ], key="RSA_"),
+                sg.Tab("ElGamal", [
+
+                ], key="ElGamal_"),
+                sg.Tab("ECC", [
+                    [sg.T("y=x^3+a*x+b (mod p)")],
+                    [sg.T("a (int)", size=(10, 1)), sg.In(key="keygen_ecc_a", size=(60, 1))],
+                    [sg.T("b (int)", size=(10, 1)), sg.In(key="keygen_ecc_b", size=(60, 1))],
+                    [sg.T("p (int)", size=(10, 1)), sg.In(key="keygen_ecc_p", size=(60, 1))],
+                    [sg.T("B (int, Base point seed)", size=(25, 1)), sg.In(key="keygen_ecc_base", size=(43, 1))],
+                ], key="ECC_"),
+                sg.Tab("Paillier", [
+                    # TODO
+                    [sg.T("butuh input apa, masukin sini chel")],
+                ], key="Paillier_"),
+            ]], key="keygen_method")],
             [sg.Button("Generate Public/Private Key Pair", pad=(5, 10), key="generate")],
+            [sg.HSep()],
+            [sg.T("Public Key", size=(15, 1)), sg.In(key="pubkey_gen", size=(45, 1)), sg.T(".pub")],
+            [sg.T("Private Key", size=(15, 1)), sg.In(key="privkey_gen", size=(45, 1)), sg.T(".pri")],
+            [sg.T("Key Pair Filename", size=(15, 1)), sg.In(key="keygen_filename", size=(55, 1))],
+            [sg.Button("Save Key Pair", pad=(5, 10), key="save_keygen")],
         ], key="keygen"),
         sg.Tab("Encrypt/Decrypt", [
-            [sg.T("Method", size=(10, 1)), sg.DropDown(["RSA", "ElGamal", "Paillier", "ECC"], key="method", default_value="ECC", size=(10, 1))],
-            # TODO:
-            # ubah jadi tabgroup
-            # ECC perlu y=x^3+a*x+b (mod p). input a,b,p dan basis B
-            # RSA perlu
-            # ElGamal perlu
-            # Paillier perlu
+            [sg.TabGroup([[
+                sg.Tab("RSA", [
+                    # TODO
+                    [sg.T("butuh input apa, masukin sini chel")],
+                ], key="RSA"),
+                sg.Tab("ElGamal", [
+
+                ], key="ElGamal"),
+                sg.Tab("ECC", [
+                    [sg.T("y=x^3+a*x+b (mod p)")],
+                    [sg.T("a (int)", size=(10, 1)), sg.In(key="ecc_a", size=(60, 1))],
+                    [sg.T("b (int)", size=(10, 1)), sg.In(key="ecc_b", size=(60, 1))],
+                    [sg.T("p (int)", size=(10, 1)), sg.In(key="ecc_p", size=(60, 1))],
+                    [sg.T("B (int, Base point seed)", size=(25, 1)), sg.In(key="ecc_base", size=(40, 1))],
+                ], key="ECC"),
+                sg.Tab("Paillier", [
+                    # TODO
+                    [sg.T("butuh input apa, masukin sini chel")],
+                ], key="Paillier"),
+            ]], key="method")],
+            [sg.Button("Validate Input", pad=(5, 10), key="validate")],
+            [sg.HSep()],
+
             [sg.T("Public Key:")],
             [sg.TabGroup([[
                 sg.Tab("From Text", [
@@ -101,6 +138,22 @@ while sg_input := window.read():
         match sg_input:
             case ((sg.WIN_CLOSED | "Exit"), _):
                 break
+
+            # Validate
+            case ("validate" as event, {
+                "method": "ECC",
+                "ecc_a": a,
+                "ecc_b": b,
+                "ecc_p": p,
+                "ecc_base": base,
+            }):
+                cipher = ECC(a=int(a), b=int(b), p=int(p), base=int(base))
+                cipher.validate_input()
+                n = len(cipher.curve.all_points)
+                base_point = cipher.curve.encode(cipher.base)
+                debug_text, debug_color = f"Succesfully validated! num_points:{n}, base:{base_point}", Config.SUCCESS_COLOR
+
+            # Encrypt / Decrypt
             case (("encrypt" | "decrypt") as event, values):
                 method = values["method"]
                 cipher = CIPHER_MAP.get(method)
@@ -113,11 +166,19 @@ while sg_input := window.read():
                         "pubkey_source": pubkey_source,
                     }):
                         # Read pubkey
-                        pubkey = pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0]
+                        cipher_args = {
+                            "plaintext": int(plaintext),
+                            "pubkey": pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0],
+                        }
                         if method != "ECC":
-                            pubkey = int(pubkey)
-                        plaintext = int(plaintext)
-                        cipher = cipher(plaintext=plaintext, pubkey=pubkey)
+                            cipher_args |= {
+                                "pubkey": int(cipher_args["pubkey"]),
+                                "a": int(values["ecc_a"]),
+                                "b": int(values["ecc_b"]),
+                                "p": int(values["ecc_p"]),
+                                "base": int(values["ecc_base"]),
+                            }
+                        cipher = cipher(**cipher_args)
                         cipher.encrypt()
                         window["ciphertext"].update(str(cipher.ciphertext))
 
@@ -138,17 +199,37 @@ while sg_input := window.read():
 
                 debug_text, debug_color = f"Succesfully {event}ed!", Config.SUCCESS_COLOR
 
+            # Generate Key
             case ("generate", {"keygen_method": method}):
-                privkey_gen, pubkey_gen = CIPHER_MAP.get(method)().generate_key()
+                privkey_gen, pubkey_gen = CIPHER_MAP.get(method.split("_")[0])().generate_key()
                 window["pubkey_gen"].update(pubkey_gen)
                 window["privkey_gen"].update(privkey_gen)
 
-            case (event, {"filename": filename}) if filename == "":
+            # Save To File
+            case (event, {
+                "keygen_filename": keygen_filename,
+                "filename": filename,
+            }) if (
+                (event == "save_keygen" and keygen_filename == "") or
+                (event in ["save_plaintext", "save_ciphertext"] and filename == "")
+            ):
                 debug_text, debug_color = "Output filename cannot be empty", Config.FAIL_COLOR
+            case ("save_keygen", {
+                "keygen_filename": keygen_filename,
+                "pubkey_gen": pubkey,
+                "privkey_gen": privkey,
+            }):
+                write_file("out/" + keygen_filename + ".pub", pubkey)
+                write_file("out/" + keygen_filename + ".pri", privkey)
+                debug_text, debug_color = f"Successfully saved public / private key pair as {keygen_filename}.pub and {keygen_filename}.pri!", Config.SUCCESS_COLOR
             case ("save_plaintext", {"filename": filename}):
-                write_file("out/" + filename, cipher.plaintext)
+                filename = "out/" + filename
+                write_file(filename, cipher.plaintext)
+                debug_text, debug_color = f"Successfully saved plaintext as {filename}!", Config.SUCCESS_COLOR
             case ("save_ciphertext", {"filename": filename}):
-                write_file("out/" + filename, cipher.ciphertext)
+                filename = "out/" + filename
+                write_file(filename, cipher.ciphertext)
+                debug_text, debug_color = f"Successfully saved ciphertext as {filename}!", Config.SUCCESS_COLOR
 
     except Exception as e:
         debug_text, debug_color = str(e), Config.FAIL_COLOR

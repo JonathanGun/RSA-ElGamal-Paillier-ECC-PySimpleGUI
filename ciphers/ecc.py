@@ -167,12 +167,10 @@ class Curve:
 
 
 class ECC(BaseCipher):
-    def __init__(self, plaintext: int = None, ciphertext: int = None, privkey: int = None, pubkey: int = None):
-        super().__init__(plaintext=plaintext, ciphertext=ciphertext, privkey=privkey, pubkey=pubkey)
-        # TODO ga hardcode dong
-        base = 123
-        self.curve = Curve(a=1, b=6, p=11)
-        self.base = self.curve.encode(base)
+    def __init__(self, a: int, b: int, p: int, base: int, **kwargs):
+        super().__init__(**kwargs)
+        self.curve = Curve(a, b, p)
+        self.base = base
 
     def encrypt(self):
         # Slide hal 41
@@ -181,7 +179,7 @@ class ECC(BaseCipher):
         k = random.randint(1, self.curve.p - 1)
         self.plaintext = self.curve.encode(self.plaintext)
         cip = self.curve.add(self.plaintext, self.curve.mult(k, self.pubkey))
-        kB = self.curve.mult(k, self.base)
+        kB = self.curve.mult(k, self.curve.encode(self.base))
         self.ciphertext = f"{self.curve.decode(kB)}, {self.curve.decode(cip)}"
         return self.ciphertext
 
@@ -198,5 +196,8 @@ class ECC(BaseCipher):
         privkey, pubkey = super().generate_key()
         privkey %= self.curve.p
         privkey += 1
-        pubkey = self.curve.mult(privkey, self.base)
+        pubkey = self.curve.mult(privkey, self.curve.encode(self.base))
         return privkey, pubkey
+
+    def validate_input(self):
+        assert 4 * self.curve.a ** 3 + 27 * self.curve.b ** 2 != 0
