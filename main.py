@@ -169,14 +169,18 @@ while sg_input := window.read():
                             "plaintext": int(plaintext),
                             "pubkey": pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0],
                         }
-                        if method == "ECC":
-                            cipher_args |= {
-                                "pubkey": int(cipher_args["pubkey"]),
-                                "a": int(values["ecc_a"]),
-                                "b": int(values["ecc_b"]),
-                                "p": int(values["ecc_p"]),
-                                "base": int(values["ecc_base"]),
-                            }
+                        match (method, values):
+                            case ("ECC", {
+                                "ecc_a": a,
+                                "ecc_b": b,
+                                "ecc_p": p,
+                                "ecc_base": base,
+                            }):
+                                cipher_args |= {"a": int(a), "b": int(b), "p": int(p), "base": int(base)}
+                            case ("Paillier", _):
+                                pass
+                            case _:
+                                cipher_args["pubkey"] = int(cipher_args["pubkey"])
                         cipher = cipher(**cipher_args)
                         cipher.encrypt()
                         window["ciphertext"].update(str(cipher.ciphertext))
@@ -188,11 +192,25 @@ while sg_input := window.read():
                         "privkey_source": privkey_source,
                     }):
                         # Read privkey
-                        privkey = privkey if privkey_source == "privkey_text_tab" else load_file(privkey_file)[0]
-                        if method not in ["Paillier"]:
-                            privkey = int(privkey)
-                        ciphertext = int(ciphertext)
-                        cipher = cipher(ciphertext=ciphertext, privkey=privkey)
+                        cipher_args = {
+                            "ciphertext": ciphertext,
+                            "privkey": privkey if privkey_source == "privkey_text_tab" else load_file(privkey_file)[0]
+                        }
+                        match (method, values):
+                            case ("ECC", {
+                                "ecc_a": a,
+                                "ecc_b": b,
+                                "ecc_p": p,
+                                "ecc_base": base,
+                            }):
+                                cipher_args |= {"a": int(a), "b": int(b), "p": int(p), "base": int(base)}
+                                cipher_args["privkey"] = int(cipher_args["privkey"])
+                            case ("Paillier", _):
+                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
+                            case _:
+                                cipher_args["privkey"] = int(cipher_args["privkey"])
+                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
+                        cipher = cipher(**cipher_args)
                         cipher.decrypt()
                         window["plaintext"].update(str(cipher.plaintext))
 
@@ -222,8 +240,9 @@ while sg_input := window.read():
                 "keygen_ecc_a": a,
                 "keygen_ecc_b": b,
                 "keygen_ecc_p": p,
+                "keygen_ecc_base": base,
             }):
-                privkey_gen, pubkey_gen = ECC(int(a), int(b), int(p)).generate_key()
+                privkey_gen, pubkey_gen = ECC(int(a), int(b), int(p), int(base)).generate_key()
                 window["pubkey_gen"].update(str(pubkey_gen))
                 window["privkey_gen"].update(str(privkey_gen))
                 debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR

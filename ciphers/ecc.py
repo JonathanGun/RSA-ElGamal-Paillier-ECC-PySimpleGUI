@@ -174,7 +174,7 @@ class ECC(BaseCipher):
 
     def encrypt(self):
         # Slide hal 41
-        self.pubkey = Point(*list(map(int, re.findall(r'\d+', self.pubkey)))[:2])
+        self.pubkey = Point(*self._parse_tuple(self.pubkey, 2))
         k = random.randint(1, self.curve.p - 1)
         self.plaintext = self.curve.encode(self.plaintext)
         cip = self.curve.add(self.plaintext, self.curve.mult(k, self.pubkey))
@@ -184,12 +184,15 @@ class ECC(BaseCipher):
 
     def decrypt(self):
         # Slide hal 41
-        kB, self.ciphertext = map(int, self.ciphertext.replace(" ", "").split(","))
+        kB, self.ciphertext = self._parse_tuple(self.ciphertext, 2)
         kB = self.curve.encode(kB)
         self.ciphertext = self.curve.encode(self.ciphertext)
         self.plaintext = self.curve.sub(self.ciphertext, self.curve.mult(self.privkey, kB))
         self.plaintext = self.curve.decode(self.plaintext)
         return self.plaintext
+
+    def _parse_tuple(self, s: str, n: int = 2):
+        return list(map(int, re.findall(r'\d+', s)))[:n]
 
     def generate_key(self):
         privkey, pubkey = super().generate_key()
