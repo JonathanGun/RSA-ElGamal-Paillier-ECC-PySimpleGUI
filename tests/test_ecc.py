@@ -2,7 +2,7 @@ from ciphers.ecc import ECC, Point
 
 
 def test_sample():
-    ecc = ECC()
+    ecc = ECC(1, 6, 11, 123)
     # Example slide 30 - 32
     p = Point(2, 4)
     q = Point(5, 9)
@@ -33,13 +33,15 @@ def test_sample():
 
     for i in range(100):
         plain1 = 3
-        a, pa = ECC().generate_key()
-        b, pb = ECC().generate_key()
+        a, pa = ecc.generate_key()
+        b, pb = ecc.generate_key()
         cip = ECC(
+            1, 6, 11, 123,
             plaintext=plain1,
             pubkey=str(pb),
         ).encrypt()
         plain2 = ECC(
+            1, 6, 11, 123,
             ciphertext=cip,
             privkey=int(b),
         ).decrypt()
