@@ -29,10 +29,12 @@ layout = [
             [sg.TabGroup([[
                 sg.Tab("RSA", [
                     # TODO chel
-                    [sg.T("butuh input apa, masukin sini chel")],
                 ], key="RSA_"),
                 sg.Tab("ElGamal", [
                     # TODO chel
+                    [sg.T("prime p (int)", size=(10, 1)), sg.In(key="keygen_elgamal_p", size=(60, 1))],
+                    [sg.T("prime g (int)", size=(10, 1)), sg.In(key="keygen_elgamal_g", size=(60, 1))],
+                    [sg.T("x (int)", size=(10, 1)), sg.In(key="keygen_elgamal_x", size=(60, 1))],
                 ], key="ElGamal_"),
                 sg.Tab("ECC", [
                     [sg.T("y=x^3+a*x+b (mod p)")],
@@ -63,6 +65,7 @@ layout = [
                 ], key="RSA"),
                 sg.Tab("ElGamal", [
                     # TODO chel
+                    [sg.T("k (int)", size=(10, 1)), sg.In(key="elgamal_k", size=(60, 1))],
                 ], key="ElGamal"),
                 sg.Tab("ECC", [
                     [sg.T("y=x^3+a*x+b (mod p)")],
@@ -140,6 +143,13 @@ while sg_input := window.read():
 
             # Validate
             case ("validate" as event, {
+                "method": "ElGamal",
+                "elgamal_k": k,
+            }):
+                cipher = ElGamal()
+                cipher.encrypt(k=int(k)).validate_input()
+                debug_text, debug_color = f"Succesfully validated!", Config.SUCCESS_COLOR
+            case ("validate" as event, {
                 "method": "ECC",
                 "ecc_a": a,
                 "ecc_b": b,
@@ -170,6 +180,10 @@ while sg_input := window.read():
                             "pubkey": pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0],
                         }
                         match (method, values):
+                            case("ElGamal", {
+                                "elgamal_k": k,
+                            }):
+                                cipher_args |= {"k": int(k)}
                             case ("ECC", {
                                 "ecc_a": a,
                                 "ecc_b": b,
@@ -229,9 +243,11 @@ while sg_input := window.read():
             case ("generate", {
                 "keygen_method": "ElGamal_",
                 # TODO chel
-                # "keygen_elgamal_x": x,
+                "keygen_elgamal_p": p,
+                "keygen_elgamal_g": g,
+                "keygen_elgamal_x": x,
             }):
-                privkey_gen, pubkey_gen = ElGamal().generate_key()  # TODO chel
+                privkey_gen, pubkey_gen = ElGamal().generate_key(int(p), int(g), int(x))  # TODO chel
                 window["pubkey_gen"].update(str(pubkey_gen))
                 window["privkey_gen"].update(str(privkey_gen))
                 debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
