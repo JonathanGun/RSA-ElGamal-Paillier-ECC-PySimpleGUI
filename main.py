@@ -33,7 +33,6 @@ layout = [
                     [sg.T("e (int)", size=(10, 1)), sg.In(key="keygen_rsa_e", size=(60, 1))],
                 ], key="RSA_"),
                 sg.Tab("ElGamal", [
-                    # TODO chel
                     [sg.T("prime p (int)", size=(10, 1)), sg.In(key="keygen_elgamal_p", size=(60, 1))],
                     [sg.T("prime g (int)", size=(10, 1)), sg.In(key="keygen_elgamal_g", size=(60, 1))],
                     [sg.T("x (int)", size=(10, 1)), sg.In(key="keygen_elgamal_x", size=(60, 1))],
@@ -236,23 +235,21 @@ while sg_input := window.read():
             # Generate Key
             case ("generate", {
                 "keygen_method": "RSA_",
-                # TODO chel
                 "keygen_rsa_p": p,
                 "keygen_rsa_q": q,
                 "keygen_rsa_e": e,
             }):
-                privkey_gen, pubkey_gen = RSA().generate_key(int(p), int(q), int(e))  # TODO chel
+                privkey_gen, pubkey_gen = RSA().generate_key(int(p), int(q), int(e))
                 window["pubkey_gen"].update(str(pubkey_gen))
                 window["privkey_gen"].update(str(privkey_gen))
                 debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
             case ("generate", {
                 "keygen_method": "ElGamal_",
-                # TODO chel
                 "keygen_elgamal_p": p,
                 "keygen_elgamal_g": g,
                 "keygen_elgamal_x": x,
             }):
-                privkey_gen, pubkey_gen = ElGamal().generate_key(int(p), int(g), int(x))  # TODO chel
+                privkey_gen, pubkey_gen = ElGamal().generate_key(int(p), int(g), int(x))
                 window["pubkey_gen"].update(str(pubkey_gen))
                 window["privkey_gen"].update(str(privkey_gen))
                 debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
