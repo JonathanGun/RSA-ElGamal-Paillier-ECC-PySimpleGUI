@@ -22,11 +22,13 @@ class BaseCipher(ABC):
     def decrypt(self):
         pass
 
-    def generate_key(self, is_prime: bool = False):
+    def generate_key(self, is_prime: bool = False, mx: int = None):
+        if mx is None:
+            mx = BaseCipher.MAX_NUM
         if is_prime:
-            p = primes.upto(BaseCipher.MAX_NUM)
+            p = primes.upto(mx)
             return random.choice(p), random.choice(p)
-        return random.randint(0, BaseCipher.MAX_NUM), random.randint(0, BaseCipher.MAX_NUM)
+        return random.randint(0, mx), random.randint(0, mx)
 
     def validate_input(self):
         pass

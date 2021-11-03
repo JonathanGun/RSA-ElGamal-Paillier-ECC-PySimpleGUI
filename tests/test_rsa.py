@@ -1,5 +1,7 @@
 from ciphers.rsa import RSA
 import random
+import string
+
 
 def test_sample():
     rsa = RSA()
@@ -19,8 +21,8 @@ def test_sample():
     assert plain == 'HELLO ALICE'
 
     privkey, pubkey = RSA().generate_key()
-    for _ in range(1000):
-        plain = random.randint(1, int(1e2))
+    for _ in range(100):
+        plain = "".join(random.choice(string.printable) for _ in range(10))
         cip = RSA(
             plaintext=plain,
             pubkey=str(pubkey),

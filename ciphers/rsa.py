@@ -10,7 +10,6 @@ class RSA(BaseCipher):
         e, n = self._parse_tuple(self.pubkey, 2)
         c = [str(pow(ord(char), e, n)) for char in self.plaintext]
 
-
         self.ciphertext = ','.join(c)
         return self.ciphertext
 
@@ -25,10 +24,8 @@ class RSA(BaseCipher):
             p, q = super().generate_key(is_prime=True)
         n = p * q
         phi = (p - 1) * (q - 1)  # toitent
-        while e is None:
-            e = super().generate_key(is_prime=True)
-            if(e > phi):
-                e = random.randint(2, phi)
+        if e is None:
+            _, e = super().generate_key(is_prime=True, mx=phi)
         d = pow(e, -1, phi)
         privkey = (d, n)
         pubkey = (e, n)
