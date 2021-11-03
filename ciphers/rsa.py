@@ -2,9 +2,6 @@ from ciphers.base import BaseCipher
 
 
 class RSA(BaseCipher):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def encrypt(self):
         e, n = self._parse_tuple(self.pubkey, 2)
         c = [str(pow(ord(char), e, n)) for char in self.plaintext]
