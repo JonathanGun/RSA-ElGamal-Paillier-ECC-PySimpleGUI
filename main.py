@@ -178,11 +178,12 @@ while sg_input := window.read():
                             "plaintext": int(plaintext),
                             "pubkey": pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0],
                         }
+                        encrypt_args = {}
                         match (method, values):
                             case("ElGamal", {
                                 "elgamal_k": k,
                             }):
-                                cipher_args |= {"k": int(k)}
+                                encrypt_args |= {"k": int(k)}
                             case ("ECC", {
                                 "ecc_a": a,
                                 "ecc_b": b,
@@ -195,7 +196,7 @@ while sg_input := window.read():
                             case _:
                                 cipher_args["pubkey"] = int(cipher_args["pubkey"])
                         cipher = cipher(**cipher_args)
-                        cipher.encrypt()
+                        cipher.encrypt(**encrypt_args)
                         window["ciphertext"].update(str(cipher.ciphertext))
 
                     case ("decrypt", {
