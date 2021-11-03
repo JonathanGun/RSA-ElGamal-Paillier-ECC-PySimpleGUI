@@ -1,6 +1,7 @@
 from ciphers.elgamal import ElGamal
 import random
 
+
 def test_sample():
     elgamal = ElGamal()
     privkey, pubkey = elgamal.generate_key(2357, 2, 1751)

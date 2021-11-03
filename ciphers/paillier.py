@@ -25,9 +25,6 @@ class Paillier(BaseCipher):
         self.plaintext = (self.L(pow(self.ciphertext, self.l, self.n2), self.n) * self.m) % self.n
         return self.plaintext
 
-    def _parse_tuple(self, s: str, n: int = 2):
-        return list(map(int, re.findall(r'\d+', s)))[:n]
-
     @staticmethod
     def L(x, n):
         return (x - 1) // n

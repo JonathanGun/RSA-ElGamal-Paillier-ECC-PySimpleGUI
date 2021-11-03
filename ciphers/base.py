@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import random
+import re
 from primePy import primes
 
 
@@ -29,3 +30,6 @@ class BaseCipher(ABC):
 
     def validate_input(self):
         pass
+
+    def _parse_tuple(self, s: str, n: int = 2):
+        return list(map(int, re.findall(r'\d+', s)))[:n]

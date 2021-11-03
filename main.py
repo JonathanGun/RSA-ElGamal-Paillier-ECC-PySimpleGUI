@@ -147,7 +147,7 @@ while sg_input := window.read():
                 "elgamal_k": k,
             }):
                 int(k)
-                debug_text, debug_color = f"Succesfully validated!", Config.SUCCESS_COLOR
+                debug_text, debug_color = "Succesfully validated!", Config.SUCCESS_COLOR
             case ("validate" as event, {
                 "method": "ECC",
                 "ecc_a": a,

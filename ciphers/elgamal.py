@@ -3,14 +3,17 @@ from ciphers.base import BaseCipher
 import random
 import re
 
+
 class ElGamal(BaseCipher):
-    def __init__(self, k, **kwargs):
+    MIN_NUM = 1e2
+
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def encrypt(self, k: int = None):
         y, g, p = self._parse_tuple(self.pubkey, 3)
         if k is None:
-            k = random.randint(1, p-2)
+            k = random.randint(1, p - 2)
         c1 = pow(g, k, p)
         c2 = (pow(y, k, p) * self.plaintext) % p
 
@@ -21,23 +24,20 @@ class ElGamal(BaseCipher):
         a, b = self._parse_tuple(self.ciphertext, 2)
         x, p = self._parse_tuple(self.privkey, 2)
 
-        m = (pow(a, p-1-x, p) * b) % p
+        m = (pow(a, p - 1 - x, p) * b) % p
         self.plaintext = m
 
         return self.plaintext
 
     def generate_key(self, p: int = None, g: int = None, x: int = None):
-        if p is None or g is None:
+        while p is None or g is None:
             p, g = super().generate_key(is_prime=True)
+            if p < ElGamal.MIN_NUM:
+                p = None
         if x is None:
-            x = random.randint(1, p-2)
+            x = random.randint(1, p - 2)
 
         y = pow(g, x, p)
-        
         privkey = (x, p)
         pubkey = (y, g, p)
-
         return privkey, pubkey
-
-    def _parse_tuple(self, s: str, n: int = 2):
-        return list(map(int, re.findall(r'\d+', s)))[:n]

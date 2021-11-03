@@ -191,9 +191,6 @@ class ECC(BaseCipher):
         self.plaintext = self.curve.decode(self.plaintext)
         return self.plaintext
 
-    def _parse_tuple(self, s: str, n: int = 2):
-        return list(map(int, re.findall(r'\d+', s)))[:n]
-
     def generate_key(self):
         privkey, pubkey = super().generate_key()
         privkey %= self.curve.p
