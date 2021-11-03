@@ -216,7 +216,7 @@ while sg_input := window.read():
                             case ("RSA", _):
                                 pass
                             case ("ElGamal", _):
-                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
+                                pass
                             case ("ECC", {
                                 "ecc_a": a,
                                 "ecc_b": b,
