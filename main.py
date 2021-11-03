@@ -28,7 +28,9 @@ layout = [
             [sg.T("Choose Method")],
             [sg.TabGroup([[
                 sg.Tab("RSA", [
-                    # TODO chel
+                    [sg.T("prime p (int)", size=(10, 1)), sg.In(key="keygen_rsa_p", size=(60, 1))],
+                    [sg.T("prime q (int)", size=(10, 1)), sg.In(key="keygen_rsa_q", size=(60, 1))],
+                    [sg.T("e (int)", size=(10, 1)), sg.In(key="keygen_rsa_e", size=(60, 1))],
                 ], key="RSA_"),
                 sg.Tab("ElGamal", [
                     # TODO chel
@@ -60,11 +62,9 @@ layout = [
             [sg.T("Choose Method")],
             [sg.TabGroup([[
                 sg.Tab("RSA", [
-                    # TODO chel
-                    [sg.T("butuh input apa, masukin sini chel")],
+                    [sg.T("No input. Go on.")],
                 ], key="RSA"),
                 sg.Tab("ElGamal", [
-                    # TODO chel
                     [sg.T("k (int)", size=(10, 1)), sg.In(key="elgamal_k", size=(60, 1))],
                 ], key="ElGamal"),
                 sg.Tab("ECC", [
@@ -175,7 +175,7 @@ while sg_input := window.read():
                     }):
                         # Read pubkey
                         cipher_args = {
-                            "plaintext": int(plaintext),
+                            "plaintext": plaintext,
                             "pubkey": pubkey if pubkey_source == "pubkey_text_tab" else load_file(pubkey_file)[0],
                         }
                         encrypt_args = {}
@@ -184,6 +184,8 @@ while sg_input := window.read():
                                 "elgamal_k": k,
                             }):
                                 encrypt_args |= {"k": int(k)}
+                                cipher_args["plaintext"] = int(cipher_args["plaintext"])
+                                cipher_args["pubkey"] = int(cipher_args["pubkey"])
                             case ("ECC", {
                                 "ecc_a": a,
                                 "ecc_b": b,
@@ -191,10 +193,13 @@ while sg_input := window.read():
                                 "ecc_base": base,
                             }):
                                 cipher_args |= {"a": int(a), "b": int(b), "p": int(p), "base": int(base)}
-                            case ("Paillier", _):
-                                pass
-                            case _:
+                                cipher_args["plaintext"] = int(cipher_args["plaintext"])
                                 cipher_args["pubkey"] = int(cipher_args["pubkey"])
+                            case ("Paillier", _):
+                                cipher_args["plaintext"] = int(cipher_args["plaintext"])
+                                cipher_args["pubkey"] = int(cipher_args["pubkey"])
+                            case _:
+                                cipher_args["pubkey"] = cipher_args["pubkey"]
                         cipher = cipher(**cipher_args)
                         cipher.encrypt(**encrypt_args)
                         window["ciphertext"].update(str(cipher.ciphertext))
@@ -212,7 +217,8 @@ while sg_input := window.read():
                         }
                         match (method, values):
                             case ("ElGamal", _):
-                                pass
+                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
+                                cipher_args["privkey"] = int(cipher_args["privkey"])
                             case ("ECC", {
                                 "ecc_a": a,
                                 "ecc_b": b,
@@ -220,12 +226,14 @@ while sg_input := window.read():
                                 "ecc_base": base,
                             }):
                                 cipher_args |= {"a": int(a), "b": int(b), "p": int(p), "base": int(base)}
+                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
                                 cipher_args["privkey"] = int(cipher_args["privkey"])
                             case ("Paillier", _):
                                 cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
-                            case _:
                                 cipher_args["privkey"] = int(cipher_args["privkey"])
-                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
+                            case _:
+                                cipher_args["privkey"] = cipher_args["privkey"]
+                                cipher_args["ciphertext"] = cipher_args["ciphertext"]
                         cipher = cipher(**cipher_args)
                         cipher.decrypt()
                         window["plaintext"].update(str(cipher.plaintext))
@@ -236,9 +244,11 @@ while sg_input := window.read():
             case ("generate", {
                 "keygen_method": "RSA_",
                 # TODO chel
-                # "keygen_rsa_x": x,
+                "keygen_rsa_p": p,
+                "keygen_rsa_q": q,
+                "keygen_rsa_e": e,
             }):
-                privkey_gen, pubkey_gen = RSA().generate_key()  # TODO chel
+                privkey_gen, pubkey_gen = RSA().generate_key(int(p), int(q), int(e))  # TODO chel
                 window["pubkey_gen"].update(str(pubkey_gen))
                 window["privkey_gen"].update(str(privkey_gen))
                 debug_text, debug_color = "Successfully generated key!", Config.SUCCESS_COLOR
