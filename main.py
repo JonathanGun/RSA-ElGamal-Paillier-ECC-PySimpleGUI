@@ -224,10 +224,9 @@ while sg_input := window.read():
                                 "ecc_base": base,
                             }):
                                 cipher_args |= {"a": int(a), "b": int(b), "p": int(p), "base": int(base)}
-                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
                                 cipher_args["privkey"] = int(cipher_args["privkey"])
                             case ("Paillier", _):
-                                pass
+                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
                         cipher = cipher(**cipher_args)
                         cipher.decrypt()
                         window["plaintext"].update(str(cipher.plaintext))
