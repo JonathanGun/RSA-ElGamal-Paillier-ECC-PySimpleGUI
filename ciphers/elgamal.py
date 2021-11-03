@@ -1,14 +1,9 @@
-from dataclasses import dataclass
 from ciphers.base import BaseCipher
 import random
-import re
 
 
 class ElGamal(BaseCipher):
     MIN_NUM = 1e2
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     def encrypt(self, k: int = None):
         y, g, p = self._parse_tuple(self.pubkey, 3)
@@ -23,10 +18,7 @@ class ElGamal(BaseCipher):
     def decrypt(self):
         a, b = self._parse_tuple(self.ciphertext, 2)
         x, p = self._parse_tuple(self.privkey, 2)
-
-        m = (pow(a, p - 1 - x, p) * b) % p
-        self.plaintext = m
-
+        self.plaintext = (pow(a, p - 1 - x, p) * b) % p
         return self.plaintext
 
     def generate_key(self, p: int = None, g: int = None, x: int = None):

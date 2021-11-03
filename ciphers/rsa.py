@@ -1,5 +1,4 @@
 from ciphers.base import BaseCipher
-import random
 
 
 class RSA(BaseCipher):
