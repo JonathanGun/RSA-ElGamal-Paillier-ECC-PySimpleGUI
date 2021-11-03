@@ -17,7 +17,7 @@ class RSA(BaseCipher):
 
     def generate_key(self, p: int = None, q: int = None, e: int = None):
         if p is None or q is None:
-            p, q = super().generate_key(is_prime=True)
+            p, q = super().generate_key(is_prime=True, mx=1e2)
         n = p * q
         phi = (p - 1) * (q - 1)  # toitent
         if e is None:

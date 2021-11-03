@@ -31,8 +31,7 @@ def test_sample():
     assert ecc.curve.decode(Point(5, 2)) == 4
     assert ecc.curve.decode(Point(7, 9)) == 7
 
-    for i in range(100):
-        plain1 = 3
+    for plain1 in range(1, len(ecc.curve.all_points)):
         a, pa = ecc.generate_key()
         b, pb = ecc.generate_key()
         cip = ECC(
