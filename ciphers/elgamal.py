@@ -4,6 +4,9 @@ import random
 import re
 
 class ElGamal(BaseCipher):
+    def __init__(self, k, **kwargs):
+        super().__init__(**kwargs)
+
     def encrypt(self, k: int = None):
         y, g, p = self._parse_tuple(self.pubkey, 3)
         if k is None:

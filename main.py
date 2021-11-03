@@ -146,8 +146,7 @@ while sg_input := window.read():
                 "method": "ElGamal",
                 "elgamal_k": k,
             }):
-                cipher = ElGamal()
-                cipher.encrypt(k=int(k)).validate_input()
+                int(k)
                 debug_text, debug_color = f"Succesfully validated!", Config.SUCCESS_COLOR
             case ("validate" as event, {
                 "method": "ECC",
@@ -211,6 +210,8 @@ while sg_input := window.read():
                             "privkey": privkey if privkey_source == "privkey_text_tab" else load_file(privkey_file)[0]
                         }
                         match (method, values):
+                            case ("ElGamal", _):
+                                pass
                             case ("ECC", {
                                 "ecc_a": a,
                                 "ecc_b": b,
