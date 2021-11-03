@@ -227,7 +227,7 @@ while sg_input := window.read():
                                 cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
                                 cipher_args["privkey"] = int(cipher_args["privkey"])
                             case ("Paillier", _):
-                                cipher_args["ciphertext"] = int(cipher_args["ciphertext"])
+                                pass
                         cipher = cipher(**cipher_args)
                         cipher.decrypt()
                         window["plaintext"].update(str(cipher.plaintext))

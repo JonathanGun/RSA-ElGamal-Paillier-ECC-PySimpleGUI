@@ -22,8 +22,8 @@ class RSA(BaseCipher):
         phi = (p - 1) * (q - 1)  # toitent
         if e is None:
             _, e = super().generate_key(is_prime=True, mx=phi)
+
         d = pow(e, -1, phi)
         privkey = (d, n)
         pubkey = (e, n)
-
         return privkey, pubkey
