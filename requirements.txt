@@ -1,2 +1,1 @@
-pysimplegui==4.47.0
 primePy==1.3
